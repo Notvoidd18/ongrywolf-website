@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Shield, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { getCurrentSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -69,25 +69,7 @@ export default async function LoginPage({ searchParams }: Props) {
             <span>Continue with Discord</span>
           </a>
 
-          <div className="relative flex items-center justify-center py-1">
-            <div className="border-t border-surface-border w-full"></div>
-            <span className="bg-surface px-2 text-[10px] uppercase font-mono tracking-wider text-slate-500 shrink-0">
-              OR
-            </span>
-            <div className="border-t border-surface-border w-full"></div>
-          </div>
-
           <PasskeyLoginForm />
-        </div>
-
-        <div className="pt-4 border-t border-surface-border text-left space-y-2 text-[11px] text-slate-400">
-          <div className="font-semibold text-slate-300 flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-brand-400" />
-            Server Authorization Protocol
-          </div>
-          <p className="leading-relaxed">
-            Administrative access is strictly restricted to verified owner identity (`notvoid18`). Standard accounts access the self-hosted Bot Dashboard.
-          </p>
         </div>
       </Card>
     </div>

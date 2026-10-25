@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { KeyRound, Loader2, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export default function PasskeyLoginForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,10 +26,9 @@ export default function PasskeyLoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed. Please verify your passkey.');
+        throw new Error(data.error || 'Invalid passkey.');
       }
 
-      // Successful login -> Redirect to admin panel
       window.location.href = data.redirect || '/admin';
     } catch (err: any) {
       setError(err.message || 'Failed to authenticate.');
@@ -37,81 +36,63 @@ export default function PasskeyLoginForm() {
     }
   };
 
-  return (
-    <div className="pt-2">
-      {!isOpen ? (
+  if (!isOpen) {
+    return (
+      <div className="pt-1 text-center">
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-surface-border hover:border-brand-500/40 bg-surface-card/60 hover:bg-surface-card text-xs text-slate-300 hover:text-white transition-all duration-200"
+          className="text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
         >
-          <KeyRound className="w-3.5 h-3.5 text-brand-400" />
-          <span>Login with Owner Passkey (Bypass Discord Rate-Limit)</span>
+          Passkey
         </button>
-      ) : (
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 rounded-xl border border-brand-500/30 bg-surface-card/90 space-y-3.5 text-left transition-all"
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="p-3.5 rounded-lg border border-surface-border bg-surface-card space-y-2.5 text-left transition-all"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-300">Passkey</span>
+        <button
+          type="button"
+          onClick={() => {
+            setIsOpen(false);
+            setError(null);
+          }}
+          className="text-[11px] text-slate-500 hover:text-slate-300"
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-semibold text-brand-300">
-              <ShieldCheck className="w-4 h-4 text-brand-400" />
-              <span>Studio Owner Direct Login</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                setError(null);
-              }}
-              className="text-[11px] text-slate-400 hover:text-slate-200"
-            >
-              Cancel
-            </button>
-          </div>
+          Cancel
+        </button>
+      </div>
 
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Directly authenticate as verified Studio Owner (<code className="text-brand-300">notvoid18</code>) without contacting Discord API.
-          </p>
-
-          {error && (
-            <div className="p-2.5 rounded-lg bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs flex items-start gap-2">
-              <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-              <span className="text-[11px] leading-relaxed">{error}</span>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <input
-              type="password"
-              placeholder="Enter Owner Passkey..."
-              value={passkey}
-              onChange={(e) => setPasskey(e.target.value)}
-              disabled={loading}
-              autoFocus
-              className="w-full px-3 py-2 text-xs rounded-lg bg-surface border border-surface-border text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 font-mono transition-colors"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || !passkey.trim()}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white transition-all shadow-sm cursor-pointer"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Verifying Passkey...</span>
-              </>
-            ) : (
-              <>
-                <span>Access Admin Panel</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
-        </form>
+      {error && (
+        <div className="text-[11px] text-rose-400 bg-rose-950/40 border border-rose-900/50 rounded px-2.5 py-1.5">
+          {error}
+        </div>
       )}
-    </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="password"
+          placeholder="Enter passkey..."
+          value={passkey}
+          onChange={(e) => setPasskey(e.target.value)}
+          disabled={loading}
+          autoFocus
+          className="w-full px-2.5 py-1.5 text-xs rounded bg-surface border border-surface-border text-white placeholder-slate-600 focus:outline-none focus:border-brand-500 transition-colors font-mono"
+        />
+        <button
+          type="submit"
+          disabled={loading || !passkey.trim()}
+          className="px-3 py-1.5 text-xs font-medium rounded bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white transition-all shrink-0 cursor-pointer"
+        >
+          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Enter'}
+        </button>
+      </div>
+    </form>
   );
 }

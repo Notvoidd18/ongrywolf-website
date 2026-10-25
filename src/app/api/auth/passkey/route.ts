@@ -14,8 +14,6 @@ function getValidPasskeys(): string[] {
   if (process.env.OWNER_PASSKEY?.trim()) {
     keys.push(process.env.OWNER_PASSKEY.trim());
   }
-  // Master emergency passkey (configurable via ADMIN_ACCESS_KEY or OWNER_PASSKEY in Render)
-  keys.push('ongrywolf-owner-2026');
   return keys;
 }
 
@@ -25,10 +23,17 @@ export async function POST(req: NextRequest) {
     const providedKey = (body?.passkey || '').trim();
 
     if (!providedKey) {
-      return NextResponse.json({ error: 'Please enter your owner passkey.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please enter your passkey.' }, { status: 400 });
     }
 
     const validKeys = getValidPasskeys();
+    if (validKeys.length === 0) {
+      return NextResponse.json(
+        { error: 'ADMIN_ACCESS_KEY is not configured in server environment variables.' },
+        { status: 503 }
+      );
+    }
+
     const isValid = validKeys.some((k) => {
       if (k.length !== providedKey.length) return false;
       try {
@@ -40,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     if (!isValid) {
       return NextResponse.json(
-        { error: 'Invalid owner passkey. Please check your secret key.' },
+        { error: 'Invalid passkey.' },
         { status: 401 }
       );
     }
@@ -75,7 +80,7 @@ export async function POST(req: NextRequest) {
       action: 'OWNER_PASSKEY_LOGIN',
       targetType: 'SYSTEM',
       targetId: 'auth_passkey',
-      details: { via: 'emergency_owner_passkey' },
+      details: { via: 'owner_passkey' },
     });
 
     const response = NextResponse.json({
