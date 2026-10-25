@@ -4,6 +4,7 @@ import { ArrowLeft, Shield, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { getCurrentSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import PasskeyLoginForm from '@/components/PasskeyLoginForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export default async function LoginPage({ searchParams }: Props) {
           </div>
         )}
 
-        <div className="pt-2">
+        <div className="pt-2 space-y-3">
           <a
             href="/api/auth/discord"
             className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded bg-[#5865F2] hover:bg-[#4752C4] text-white font-medium text-sm transition-all shadow-sm cursor-pointer"
@@ -67,6 +68,16 @@ export default async function LoginPage({ searchParams }: Props) {
             </svg>
             <span>Continue with Discord</span>
           </a>
+
+          <div className="relative flex items-center justify-center py-1">
+            <div className="border-t border-surface-border w-full"></div>
+            <span className="bg-surface px-2 text-[10px] uppercase font-mono tracking-wider text-slate-500 shrink-0">
+              OR
+            </span>
+            <div className="border-t border-surface-border w-full"></div>
+          </div>
+
+          <PasskeyLoginForm />
         </div>
 
         <div className="pt-4 border-t border-surface-border text-left space-y-2 text-[11px] text-slate-400">
