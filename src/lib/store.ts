@@ -1256,7 +1256,11 @@ export const db = {
   async updateHostedBotConfig(
     id: string,
     updates: {
+      displayName?: string;
       statusText?: string;
+      statusType?: string;
+      onlineMode?: 'online' | 'idle' | 'dnd' | 'invisible';
+      streamingUrl?: string;
       prefix?: string;
       token?: string;
       enabledModules?: string[];
@@ -1269,7 +1273,11 @@ export const db = {
 
     await botHostClient.updateConfig(id, updates);
 
-    if (updates.statusText) bot.statusText = updates.statusText;
+    if (updates.displayName) bot.name = updates.displayName;
+    if (updates.statusText !== undefined) bot.statusText = updates.statusText;
+    if (updates.statusType !== undefined) bot.statusType = updates.statusType;
+    if (updates.onlineMode !== undefined) bot.onlineMode = updates.onlineMode;
+    if (updates.streamingUrl !== undefined) bot.streamingUrl = updates.streamingUrl;
     if (updates.prefix) bot.prefix = updates.prefix;
     if (updates.assignedCommands) bot.assignedCommands = updates.assignedCommands;
     if (updates.enabledModules) bot.enabledModules = updates.enabledModules;

@@ -114,6 +114,9 @@ export interface HostedBot {
   avatarUrl?: string;
   ownerAccount?: string;
   statusText: string;
+  statusType?: string; // 'Custom' | 'Playing' | 'Watching' | 'Listening' | 'Streaming' | 'Competing'
+  onlineMode?: 'online' | 'idle' | 'dnd' | 'invisible';
+  streamingUrl?: string;
   hostingEnv: 'Dedicated (Render)' | 'Ongrywolf PRV' | 'Self-Hosted VPS';
   prefix: string;
   assignedCommands: string[];

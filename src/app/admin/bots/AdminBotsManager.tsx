@@ -29,6 +29,16 @@ import {
   Filter,
   AlertTriangle,
   User,
+  Settings2,
+  Tv2,
+  Mic2,
+  Eye,
+  Gamepad2,
+  Radio,
+  Moon,
+  EyeOff,
+  Loader2,
+  Zap,
 } from 'lucide-react';
 import { BotFleetMetricsGraph } from '@/components/admin/BotFleetMetricsGraph';
 
@@ -68,6 +78,16 @@ export function AdminBotsManager({
   // Delete modal state
   const [deletingBot, setDeletingBot] = useState<HostedBot | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Presence control panel state (per bot inline edit)
+  const [presenceEditingBotId, setPresenceEditingBotId] = useState<string | null>(null);
+  const [presenceForm, setPresenceForm] = useState<{
+    onlineMode: 'online' | 'idle' | 'dnd' | 'invisible';
+    statusType: string;
+    statusText: string;
+    streamingUrl: string;
+  }>({ onlineMode: 'online', statusType: 'Custom', statusText: '', streamingUrl: '' });
+  const [presenceSaving, setPresenceSaving] = useState(false);
 
   // New bot form state
   const [botName, setBotName] = useState('');
@@ -314,6 +334,52 @@ export function AdminBotsManager({
       refreshBots();
     } catch (e: any) {
       setFeedback(e.message);
+    }
+  };
+
+  // Open presence control panel for a bot
+  const handleOpenPresence = (bot: HostedBot) => {
+    setPresenceEditingBotId(bot.id);
+    setPresenceForm({
+      onlineMode: (bot.onlineMode as any) || 'online',
+      statusType: (bot as any).statusType || 'Custom',
+      statusText: bot.statusText || '',
+      streamingUrl: (bot as any).streamingUrl || '',
+    });
+  };
+
+  // Save presence config to Render 1 via API
+  const handleSavePresence = async (bot: HostedBot) => {
+    setPresenceSaving(true);
+    try {
+      const res = await fetch('/api/admin/bots', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: bot.id,
+          action: 'config',
+          updates: {
+            statusText: presenceForm.statusText,
+            statusType: presenceForm.statusType,
+            onlineMode: presenceForm.onlineMode,
+            streamingUrl: presenceForm.statusType === 'Streaming' ? presenceForm.streamingUrl : undefined,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update presence');
+      }
+
+      setFeedback(`✓ Presence for "${bot.name}" updated live on Discord!`);
+      setPresenceEditingBotId(null);
+      setTimeout(() => setFeedback(null), 4000);
+      refreshBots();
+    } catch (e: any) {
+      setFeedback(`Error: ${e.message}`);
+    } finally {
+      setPresenceSaving(false);
     }
   };
 
@@ -909,6 +975,144 @@ export function AdminBotsManager({
                 </div>
               </div>
 
+              {/* ── Presence Control Panel ── */}
+              {presenceEditingBotId === bot.id ? (
+                <div className="mt-3 p-4 rounded-xl border border-brand-500/30 bg-brand-500/5 space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-brand-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
+                      Live Presence Control
+                    </div>
+                    <button
+                      onClick={() => setPresenceEditingBotId(null)}
+                      className="text-[11px] text-slate-400 hover:text-white cursor-pointer transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  {/* Online Mode */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Online Mode</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {([
+                        { value: 'online', label: 'Online', color: 'bg-emerald-500', ring: 'ring-emerald-500/40' },
+                        { value: 'idle', label: 'Idle', color: 'bg-amber-400', ring: 'ring-amber-400/40' },
+                        { value: 'dnd', label: 'DND', color: 'bg-rose-500', ring: 'ring-rose-500/40' },
+                        { value: 'invisible', label: 'Invisible', color: 'bg-slate-500', ring: 'ring-slate-500/40' },
+                      ] as const).map((mode) => (
+                        <button
+                          key={mode.value}
+                          onClick={() => setPresenceForm((f) => ({ ...f, onlineMode: mode.value }))}
+                          className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                            presenceForm.onlineMode === mode.value
+                              ? `border-current text-white ring-2 ${mode.ring} bg-white/5`
+                              : 'border-surface-border text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                          }`}
+                          style={presenceForm.onlineMode === mode.value ? { color: mode.color.replace('bg-', '#').split('-')[0] } : {}}
+                        >
+                          <span className={`w-2.5 h-2.5 rounded-full ${mode.color} shrink-0`} />
+                          {mode.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Activity Type */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Activity Type</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {([
+                        { value: 'Custom', label: 'Custom Status', icon: '💬' },
+                        { value: 'Playing', label: 'Playing', icon: '🎮' },
+                        { value: 'Watching', label: 'Watching', icon: '👁️' },
+                        { value: 'Listening', label: 'Listening', icon: '🎵' },
+                        { value: 'Streaming', label: 'Streaming', icon: '📡' },
+                        { value: 'Competing', label: 'Competing', icon: '🏆' },
+                      ]).map((type) => (
+                        <button
+                          key={type.value}
+                          onClick={() => setPresenceForm((f) => ({ ...f, statusType: type.value }))}
+                          className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                            presenceForm.statusType === type.value
+                              ? 'border-brand-500 text-brand-300 bg-brand-500/10'
+                              : 'border-surface-border text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <span>{type.icon}</span>
+                          <span>{type.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Status Text */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Status Text</label>
+                    <input
+                      type="text"
+                      value={presenceForm.statusText}
+                      onChange={(e) => setPresenceForm((f) => ({ ...f, statusText: e.target.value }))}
+                      placeholder="e.g. Hosting on Ongrywolf · v2.0"
+                      className="w-full px-3 py-2 text-xs rounded-lg bg-surface border border-surface-border text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono transition-colors"
+                      maxLength={128}
+                    />
+                    <div className="text-right text-[10px] text-slate-500 font-mono">{presenceForm.statusText.length}/128</div>
+                  </div>
+
+                  {/* Streaming URL (only if Streaming selected) */}
+                  {presenceForm.statusType === 'Streaming' && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase font-mono text-slate-400 tracking-wider">Twitch / YouTube Stream URL</label>
+                      <input
+                        type="url"
+                        value={presenceForm.streamingUrl}
+                        onChange={(e) => setPresenceForm((f) => ({ ...f, streamingUrl: e.target.value }))}
+                        placeholder="https://twitch.tv/yourchannel"
+                        className="w-full px-3 py-2 text-xs rounded-lg bg-surface border border-surface-border text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono transition-colors"
+                      />
+                    </div>
+                  )}
+
+                  {/* Preview Badge */}
+                  <div className="p-2.5 rounded-lg bg-[#36393f] border border-white/10 flex items-center gap-2.5 text-xs text-white">
+                    <div className="relative shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-[10px] font-bold">
+                        {bot.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#36393f] ${
+                        presenceForm.onlineMode === 'online' ? 'bg-emerald-500' :
+                        presenceForm.onlineMode === 'idle' ? 'bg-amber-400' :
+                        presenceForm.onlineMode === 'dnd' ? 'bg-rose-500' : 'bg-slate-500'
+                      }`} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-white text-[11px]">{bot.username || bot.name}</div>
+                      <div className="text-slate-300 text-[10px] font-mono">
+                        {presenceForm.statusType === 'Custom' ? '' : `${presenceForm.statusType} `}
+                        {presenceForm.statusText || 'No status text set'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <button
+                    onClick={() => handleSavePresence(bot)}
+                    disabled={presenceSaving}
+                    className="w-full py-2 text-xs font-semibold rounded-lg bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {presenceSaving ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Applying to Discord Live...
+                      </>
+                    ) : (
+                      <>✓ Apply Presence Now</>
+                    )}
+                  </button>
+                </div>
+              ) : null}
+
               {/* Actions Bar */}
               <div className="pt-3 border-t border-surface-border flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
@@ -933,6 +1137,23 @@ export function AdminBotsManager({
                   >
                     <RotateCw className="w-3.5 h-3.5" />
                     <span>Restart</span>
+                  </Button>
+
+                  <Button
+                    variant={presenceEditingBotId === bot.id ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() =>
+                      presenceEditingBotId === bot.id
+                        ? setPresenceEditingBotId(null)
+                        : handleOpenPresence(bot)
+                    }
+                    className={`text-xs flex items-center gap-1 ${presenceEditingBotId === bot.id ? 'text-brand-300' : ''}`}
+                    title="Live Presence Controls"
+                  >
+                    <span className={`w-2 h-2 rounded-full ${
+                      bot.observedState === 'online' ? 'bg-emerald-400' : 'bg-slate-500'
+                    }`} />
+                    <span>Presence</span>
                   </Button>
                 </div>
 

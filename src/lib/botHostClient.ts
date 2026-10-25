@@ -17,6 +17,8 @@ export interface RemoteBotStatus {
   observedState: 'online' | 'offline' | 'connecting' | 'error' | 'stopped';
   statusText: string;
   statusType?: string;
+  onlineMode?: 'online' | 'idle' | 'dnd' | 'invisible';
+  streamingUrl?: string;
   prefix: string;
   assignedCommands: string[];
   enabledModules: string[];
@@ -236,6 +238,9 @@ class BotHostClient {
     updates: {
       displayName?: string;
       statusText?: string;
+      statusType?: string;
+      onlineMode?: 'online' | 'idle' | 'dnd' | 'invisible';
+      streamingUrl?: string;
       prefix?: string;
       token?: string;
       enabledModules?: string[];
