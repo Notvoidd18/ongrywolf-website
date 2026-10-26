@@ -26,7 +26,9 @@ import {
   Copy,
   Check,
   AlertTriangle,
+  Layers,
 } from 'lucide-react';
+import { BotFeatureMap } from '@/components/admin/BotFeatureMap';
 
 interface Props {
   initialBots: HostedBot[];
@@ -80,6 +82,7 @@ export function UserBotsDashboard({
 
   // Action loaders (botId -> action string)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [featureMapBotId, setFeatureMapBotId] = useState<string | null>(null);
 
   const fetchBots = async () => {
     setRefreshing(true);
@@ -172,6 +175,15 @@ export function UserBotsDashboard({
   // Handle bot lifecycle actions
   const handleBotAction = async (bot: HostedBot, action: 'start' | 'stop' | 'restart') => {
     setActionLoadingId(`${bot.id}_${action}`);
+    if (action === 'restart') {
+      setBots((prev) =>
+        prev.map((b) =>
+          b.id === bot.id
+            ? { ...b, observedState: 'restarting' as const, statusText: 'Restarting...' }
+            : b
+        )
+      );
+    }
     try {
       const res = await fetch(`/api/bots/${bot.id}/${action}`, { method: 'POST' });
       const data = await res.json();
@@ -179,9 +191,14 @@ export function UserBotsDashboard({
 
       setFeedback(`Bot "${bot.name}" ${action}ed successfully.`);
       setTimeout(() => setFeedback(null), 3000);
-      fetchBots();
+      if (action === 'restart') {
+        setTimeout(() => fetchBots(), 3000);
+      } else {
+        fetchBots();
+      }
     } catch (err: any) {
       setFeedback(`Action failed: ${err.message}`);
+      fetchBots();
     } finally {
       setActionLoadingId(null);
     }
@@ -516,6 +533,22 @@ export function UserBotsDashboard({
                       <RotateCw className="w-3.5 h-3.5" />
                       <span>Restart</span>
                     </Button>
+
+                    {/* Feature Map & Code */}
+                    <Button
+                      variant={featureMapBotId === bot.id ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() =>
+                        setFeatureMapBotId(featureMapBotId === bot.id ? null : bot.id)
+                      }
+                      className={`text-xs flex items-center gap-1 ${
+                        featureMapBotId === bot.id ? 'text-brand-300' : ''
+                      }`}
+                      title="Discord Bot Feature Map & Code Upload"
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>Feature Map & Code</span>
+                    </Button>
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -558,6 +591,17 @@ export function UserBotsDashboard({
                     </button>
                   </div>
                 </div>
+
+                {/* Bot Feature Map & Code Upload Accordion */}
+                {featureMapBotId === bot.id && (
+                  <div className="pt-4 border-t border-surface-border animate-in fade-in duration-200">
+                    <BotFeatureMap
+                      bot={bot}
+                      onRestartBot={async (b) => handleBotAction(b, 'restart')}
+                      isAdmin={isOwner}
+                    />
+                  </div>
+                )}
               </Card>
             );
           })}

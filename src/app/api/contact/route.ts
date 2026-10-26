@@ -7,6 +7,7 @@ const contactSchema = z.object({
   contactMethod: z.string().min(3, 'Please provide a valid contact method (e.g. Discord handle or email)'),
   category: z.enum(['plugins', 'discord-bots', 'client', 'builds', 'full-stack']),
   description: z.string().min(10, 'Description must be at least 10 characters long'),
+  clientId: z.string().regex(/^OW-[A-Z]{4}$/).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'Project request received and queued for review.',
       requestId: record.id,
+      clientId: record.clientId,
     });
   } catch (err: any) {
     if (err instanceof z.ZodError) {

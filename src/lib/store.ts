@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
 import { botHostClient, SanitizedLogEntry } from './botHostClient';
+import { getDeterministicClientId, isValidClientId } from './clientId';
 import {
   UserSession,
   UserTrial,
@@ -199,6 +200,10 @@ async function ensureSchema() {
         description TEXT NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
       );
+
+      ALTER TABLE web_project_requests ADD COLUMN IF NOT EXISTS client_id VARCHAR(32);
+      ALTER TABLE web_project_requests ADD COLUMN IF NOT EXISTS user_id VARCHAR(100);
+      ALTER TABLE web_users ADD COLUMN IF NOT EXISTS client_id VARCHAR(32);
     `);
     schemaInitialized = true;
   } catch (err) {
@@ -294,6 +299,7 @@ export const db = {
           id: row.id,
           discordId: row.discord_id,
           username: row.username,
+          clientId: row.client_id || getDeterministicClientId(row.discord_id || row.username),
           avatarUrl: row.avatar_url,
           role: row.role as Role,
           status: row.status as 'active' | 'suspended',
@@ -303,7 +309,10 @@ export const db = {
         console.error('Database getUsers failed:', e);
       }
     }
-    return Array.from(mem.users.values());
+    return Array.from(mem.users.values()).map((u) => ({
+      ...u,
+      clientId: u.clientId || getDeterministicClientId(u.discordId || u.username),
+    }));
   },
 
   async getUserById(id: string): Promise<UserSession | null> {
@@ -317,6 +326,7 @@ export const db = {
             id: row.id,
             discordId: row.discord_id,
             username: row.username,
+            clientId: row.client_id || getDeterministicClientId(row.discord_id || row.username),
             avatarUrl: row.avatar_url,
             role: row.role as Role,
             status: row.status as 'active' | 'suspended',
@@ -327,7 +337,12 @@ export const db = {
         console.error('Database getUserById failed:', e);
       }
     }
-    return mem.users.get(id) || null;
+    const memUser = mem.users.get(id);
+    if (!memUser) return null;
+    return {
+      ...memUser,
+      clientId: memUser.clientId || getDeterministicClientId(memUser.discordId || memUser.username),
+    };
   },
 
   async toggleUserSuspension(id: string, adminUsername: string): Promise<boolean> {
@@ -653,6 +668,8 @@ export const db = {
         const res = await pool.query('SELECT * FROM web_project_requests ORDER BY created_at DESC');
         return res.rows.map((r) => ({
           id: String(r.id),
+          clientId: r.client_id || getDeterministicClientId(r.user_id || r.contact_method || r.contact_name || String(r.id)),
+          userId: r.user_id || undefined,
           contactName: r.contact_name,
           contactMethod: r.contact_method,
           category: r.category,
@@ -664,25 +681,33 @@ export const db = {
         console.error('Database getProjectRequests failed:', e);
       }
     }
-    return [...mem.projectRequests];
+    return mem.projectRequests.map((r) => ({
+      ...r,
+      clientId: r.clientId || getDeterministicClientId(r.userId || r.contactMethod || r.contactName || r.id),
+    }));
   },
 
-  async submitProjectRequest(data: Omit<ProjectRequest, 'id' | 'status' | 'createdAt'>): Promise<ProjectRequest> {
+  async submitProjectRequest(data: Omit<ProjectRequest, 'id' | 'status' | 'createdAt' | 'clientId'> & { clientId?: string; userId?: string }): Promise<ProjectRequest> {
     await ensureSchema();
     const now = new Date().toISOString();
+    const resolvedClientId = data.clientId && isValidClientId(data.clientId)
+      ? data.clientId
+      : getDeterministicClientId(data.userId || data.contactMethod || data.contactName || Date.now().toString());
 
     if (pool && schemaInitialized) {
       try {
         const res = await pool.query(
-          `INSERT INTO web_project_requests (contact_name, contact_method, category, description, status, created_at)
-           VALUES ($1, $2, $3, $4, 'pending', NOW())
-           RETURNING id, created_at;`,
-          [data.contactName, data.contactMethod, data.category, data.description]
+          `INSERT INTO web_project_requests (client_id, user_id, contact_name, contact_method, category, description, status, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())
+           RETURNING id, created_at, client_id, user_id;`,
+          [resolvedClientId, data.userId || null, data.contactName, data.contactMethod, data.category, data.description]
         );
         const row = res.rows[0];
         return {
           ...data,
           id: String(row.id),
+          clientId: row.client_id || resolvedClientId,
+          userId: row.user_id || data.userId,
           status: 'pending',
           createdAt: row.created_at.toISOString(),
         };
@@ -694,6 +719,7 @@ export const db = {
     const newReq: ProjectRequest = {
       ...data,
       id: `req_${Date.now()}`,
+      clientId: resolvedClientId,
       status: 'pending',
       createdAt: now,
     };

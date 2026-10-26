@@ -105,10 +105,14 @@ export function AdminMessagesManager({ initialMessages }: Props) {
   };
 
   const filteredMessages = messages.filter((m) => {
+    const q = search.toLowerCase().trim();
     const matchesSearch =
-      m.contactName.toLowerCase().includes(search.toLowerCase()) ||
-      m.contactMethod.toLowerCase().includes(search.toLowerCase()) ||
-      m.description.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      (m.clientId && m.clientId.toLowerCase().includes(q)) ||
+      m.contactName.toLowerCase().includes(q) ||
+      m.contactMethod.toLowerCase().includes(q) ||
+      m.description.toLowerCase().includes(q) ||
+      m.id.toLowerCase().includes(q);
 
     const matchesStatus = statusFilter === 'all' || m.status === statusFilter;
     const matchesCategory = categoryFilter === 'all' || m.category === categoryFilter;
@@ -163,7 +167,7 @@ export function AdminMessagesManager({ initialMessages }: Props) {
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Search by client name, Discord handle, description..."
+              placeholder="Search by Client ID (e.g. OW-WAAD), client name, handle..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-surface-subtle border border-surface-border rounded pl-9 pr-3.5 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-brand-500"
@@ -227,6 +231,23 @@ export function AdminMessagesManager({ initialMessages }: Props) {
                   <h4 className="text-sm font-bold text-white tracking-tight">
                     {msg.contactName}
                   </h4>
+                  {msg.clientId && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-brand-500/15 text-brand-300 border border-brand-500/30">
+                      <span>{msg.clientId}</span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(msg.clientId, `client_${msg.id}`)}
+                        className="text-slate-400 hover:text-white transition-colors"
+                        title="Copy Client ID"
+                      >
+                        {copiedId === `client_${msg.id}` ? (
+                          <Check className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                      </button>
+                    </span>
+                  )}
                   <Badge variant="blue" className="uppercase font-mono text-[10px]">
                     {msg.category}
                   </Badge>

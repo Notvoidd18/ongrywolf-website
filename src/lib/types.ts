@@ -4,6 +4,7 @@ export interface UserSession {
   id: string;
   discordId: string;
   username: string;
+  clientId?: string; // Unique permanent ID, e.g. "OW-WAAD" (6 letters, 1 symbol)
   avatarUrl?: string;
   role: Role;
   status: 'active' | 'suspended';
@@ -74,11 +75,13 @@ export interface AdminAuditLog {
 
 export interface ProjectRequest {
   id: string;
+  clientId: string; // e.g. "OW-WAAD" (6 letters, 1 symbol)
   contactName: string;
   contactMethod: string;
   category: 'plugins' | 'discord-bots' | 'client' | 'builds' | 'full-stack';
   description: string;
   status: 'pending' | 'reviewed' | 'contacted' | 'completed' | 'archived';
+  userId?: string;
   createdAt: string;
 }
 

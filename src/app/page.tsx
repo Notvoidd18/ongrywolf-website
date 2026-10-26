@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/Badge';
 import { PRODUCTS, PORTFOLIO } from '@/lib/data';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { TextLineReveal } from '@/components/TextLineReveal';
+import { SelectedWorkWorkspace } from '@/components/SelectedWorkWorkspace';
 
 export default function HomePage() {
   const categoryIcons: Record<string, React.ReactNode> = {
@@ -144,16 +145,40 @@ export default function HomePage() {
       {/* 2. CORE PRODUCTS & DISCIPLINES (NEW CYBER-CARDS) */}
       <section className="py-24 sm:py-32 max-w-5xl mx-auto px-4 sm:px-6 w-full space-y-12">
         <ScrollReveal direction="up">
-          <div className="text-center space-y-3 max-w-xl mx-auto">
+          <div className="text-center space-y-4 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-300 font-mono text-[11px] uppercase tracking-wider">
+              <Shield className="w-3.5 h-3.5 text-brand-400" />
+              <span>ENTERPRISE SPECIFICATION STANDARDS</span>
+            </div>
             <TextLineReveal
               as="h2"
-              className="text-3xl sm:text-4xl font-bold tracking-tight text-white"
+              className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white"
             >
               Engineered for Speed, Stability & Clean Code
             </TextLineReveal>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Four specialized technical disciplines built to withstand high production loads.
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+              Four specialized technical disciplines architected with strict memory safety, non-blocking asynchronous event loops, and bulletproof production stability.
             </p>
+
+            {/* High-Precision Telemetry Strip */}
+            <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-xl mx-auto font-mono text-left">
+              <div className="p-2.5 rounded-xl bg-surface/70 border border-white/[0.08] backdrop-blur-sm">
+                <span className="text-[10px] text-slate-400 block uppercase">Gateway Ping</span>
+                <span className="text-xs font-bold text-emerald-400">&lt; 12ms Realtime</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-surface/70 border border-white/[0.08] backdrop-blur-sm">
+                <span className="text-[10px] text-slate-400 block uppercase">Runtime SLA</span>
+                <span className="text-xs font-bold text-brand-300">99.98% Monitored</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-surface/70 border border-white/[0.08] backdrop-blur-sm">
+                <span className="text-[10px] text-slate-400 block uppercase">Tenant Model</span>
+                <span className="text-xs font-bold text-white">Full Isolation</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-surface/70 border border-white/[0.08] backdrop-blur-sm">
+                <span className="text-[10px] text-slate-400 block uppercase">Memory Safety</span>
+                <span className="text-xs font-bold text-amber-300">0 Leak Policy</span>
+              </div>
+            </div>
           </div>
         </ScrollReveal>
 
@@ -312,7 +337,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. SELECTED WORK & TECHNICAL PORTFOLIO (UPGRADED CARDS) */}
+      {/* 4. SELECTED WORK & TECHNICAL PORTFOLIO */}
       <section className="py-24 sm:py-32 max-w-5xl mx-auto px-4 sm:px-6 w-full space-y-12">
         <ScrollReveal direction="up">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-white/[0.06] pb-6">
@@ -324,55 +349,22 @@ export default function HomePage() {
                 Selected Work
               </TextLineReveal>
               <p className="text-sm text-slate-400 mt-1">
-                Real technical achievements across deployed production environments.
+                Real technical achievements across deployed production environments and upcoming plugin suites.
               </p>
             </div>
             <Link
               href="/work"
               className="text-xs font-semibold text-brand-400 hover:text-brand-300 flex items-center gap-1.5 group self-start sm:self-auto"
             >
-              <span>Explore all creations</span>
+              <span>Explore workspace details</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
             </Link>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-          {PORTFOLIO.slice(0, 2).map((item, index) => (
-            <ScrollReveal key={item.id} direction="up" delayMs={index * 150}>
-              <div className="group relative rounded-2xl p-7 sm:p-8 bg-gradient-to-b from-[#0f172a]/95 via-[#0c1222]/95 to-[#070b14]/98 border border-white/[0.08] hover:border-brand-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-10px_rgba(0,0,0,0.7),0_0_20px_-4px_rgba(59,130,246,0.12)] h-full flex flex-col justify-between space-y-5 overflow-hidden">
-                <div className="space-y-3.5">
-                  <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
-                    <span className="uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-slate-300">
-                      {item.category}
-                    </span>
-                    <span className="text-brand-400 font-medium flex items-center gap-1">
-                      <span>{item.clientOrContext}</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-white group-hover:text-brand-300 transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-                    {item.summary}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2 pt-4 border-t border-white/[0.05]">
-                  {item.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-white/[0.03] text-slate-300 border border-white/[0.06] hover:border-white/[0.15] transition-colors"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
+        <ScrollReveal direction="up" delayMs={100}>
+          <SelectedWorkWorkspace showExploreLink={false} />
+        </ScrollReveal>
       </section>
 
       {/* 5. FINAL HIGH-IMPACT CTA */}

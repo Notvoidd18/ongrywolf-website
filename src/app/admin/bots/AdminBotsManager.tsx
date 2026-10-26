@@ -39,8 +39,10 @@ import {
   EyeOff,
   Loader2,
   Zap,
+  Layers,
 } from 'lucide-react';
 import { BotFleetMetricsGraph } from '@/components/admin/BotFleetMetricsGraph';
+import { BotFeatureMap } from '@/components/admin/BotFeatureMap';
 
 interface Props {
   initialHostedBots: HostedBot[];
@@ -81,6 +83,7 @@ export function AdminBotsManager({
 
   // Presence control panel state (per bot inline edit)
   const [presenceEditingBotId, setPresenceEditingBotId] = useState<string | null>(null);
+  const [featureMapBotId, setFeatureMapBotId] = useState<string | null>(null);
   const [presenceForm, setPresenceForm] = useState<{
     onlineMode: 'online' | 'idle' | 'dnd' | 'invisible';
     statusType: string;
@@ -315,8 +318,20 @@ export function AdminBotsManager({
     }
   };
 
-  // Restart bot on Render 1
+  // Restart bot on Render 1 (with smooth 'Restarting...' presence lifecycle)
   const handleRestartBot = async (bot: HostedBot) => {
+    // Immediately broadcast 'restarting' state and 'Restarting...' status in UI
+    setHostedBots((prev) =>
+      prev.map((b) =>
+        b.id === bot.id
+          ? {
+              ...b,
+              observedState: 'restarting' as const,
+              statusText: 'Restarting...',
+            }
+          : b
+      )
+    );
     try {
       const res = await fetch('/api/admin/bots', {
         method: 'PATCH',
@@ -329,11 +344,14 @@ export function AdminBotsManager({
         throw new Error(data.error || 'Failed to restart bot');
       }
 
-      setFeedback(`Bot "${bot.name}" restarted successfully.`);
-      setTimeout(() => setFeedback(null), 3000);
-      refreshBots();
+      setFeedback(`Bot "${bot.name}" is restarting (status: Restarting...). Restoring custom presence once reconnected.`);
+      setTimeout(() => {
+        refreshBots();
+        setFeedback(null);
+      }, 3500);
     } catch (e: any) {
       setFeedback(e.message);
+      refreshBots();
     }
   };
 
@@ -1162,6 +1180,19 @@ export function AdminBotsManager({
                     }`} />
                     <span>Presence</span>
                   </Button>
+
+                  <Button
+                    variant={featureMapBotId === bot.id ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() =>
+                      setFeatureMapBotId(featureMapBotId === bot.id ? null : bot.id)
+                    }
+                    className={`text-xs flex items-center gap-1 ${featureMapBotId === bot.id ? 'text-brand-300' : ''}`}
+                    title="Discord Bot Feature Map & Custom Code Ingestion"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>Feature Map & Code</span>
+                  </Button>
                 </div>
 
                 <div className="flex items-center gap-1.5">
@@ -1198,6 +1229,17 @@ export function AdminBotsManager({
                   )}
                 </div>
               </div>
+
+              {/* Bot Feature Map & Code Upload Accordion */}
+              {featureMapBotId === bot.id && (
+                <div className="pt-4 border-t border-surface-border animate-in fade-in duration-200">
+                  <BotFeatureMap
+                    bot={bot}
+                    onRestartBot={handleRestartBot}
+                    isAdmin={true}
+                  />
+                </div>
+              )}
             </Card>
           ))
         )}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, Search, AlertCircle, RefreshCw } from 'lucide-react';
+import { Users, Search, AlertCircle, RefreshCw, Copy, Check } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -12,6 +12,7 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -28,6 +29,12 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyClientId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   useEffect(() => {
@@ -54,12 +61,16 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.discordId.includes(searchTerm) ||
-      u.id.includes(searchTerm)
-  );
+  const filteredUsers = users.filter((u) => {
+    const q = searchTerm.toLowerCase().trim();
+    return (
+      !q ||
+      u.username.toLowerCase().includes(q) ||
+      u.discordId.includes(q) ||
+      u.id.includes(q) ||
+      (u.clientId && u.clientId.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -80,7 +91,7 @@ export default function AdminUsersPage() {
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Search username / Snowflake ID..."
+              placeholder="Search Client ID (e.g. OW-WAAD), username, ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-surface-subtle border border-surface-border rounded pl-9 pr-3.5 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-brand-500"
@@ -112,6 +123,7 @@ export default function AdminUsersPage() {
             <thead>
               <tr className="border-b border-surface-border bg-surface-subtle text-slate-400 font-semibold">
                 <th className="py-3 px-4">Discord User</th>
+                <th className="py-3 px-4">Client ID</th>
                 <th className="py-3 px-4">Snowflake ID</th>
                 <th className="py-3 px-4">Role</th>
                 <th className="py-3 px-4">Account Status</th>
@@ -121,7 +133,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-surface-border/60">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-8 text-center text-slate-500">
                     {loading ? 'Loading registered users...' : 'No registered users found.'}
                   </td>
                 </tr>
@@ -131,6 +143,25 @@ export default function AdminUsersPage() {
                     <td className="py-3 px-4">
                       <div className="font-semibold text-white">{u.username}</div>
                       <div className="text-[10px] text-slate-500">Joined: {new Date(u.createdAt).toLocaleDateString()}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-brand-500/15 text-brand-300 border border-brand-500/30">
+                        <span>{u.clientId || 'OW-NONE'}</span>
+                        {u.clientId && (
+                          <button
+                            type="button"
+                            onClick={() => copyClientId(u.clientId!)}
+                            className="text-slate-400 hover:text-white transition-colors"
+                            title="Copy Client ID"
+                          >
+                            {copiedId === u.clientId ? (
+                              <Check className="w-3 h-3 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-brand-300 font-mono">{u.discordId}</td>
                     <td className="py-3 px-4">
