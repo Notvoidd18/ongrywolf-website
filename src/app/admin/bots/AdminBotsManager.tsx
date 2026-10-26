@@ -966,10 +966,17 @@ export function AdminBotsManager({
                     </div>
                   )}
 
-                  {bot.lastError && (
-                    <div className="p-2 rounded bg-rose-950/60 border border-rose-800 text-[11px] text-rose-300 flex items-center gap-2">
-                      <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                      <span className="truncate">{bot.lastError}</span>
+                  {bot.lastError && bot.observedState !== 'online' && (
+                    <div className="p-2 rounded bg-rose-950/60 border border-rose-800 text-[11px] text-rose-300 flex items-start gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <span className="font-semibold block">{bot.lastError}</span>
+                        {bot.lastError.toLowerCase().includes('disallowed') && (
+                          <span className="text-[10px] text-rose-400/90 block leading-relaxed">
+                            Tip: In Discord Developer Portal &gt; Bot &gt; Privileged Gateway Intents, enable Message Content Intent, or click Restart to reconnect with standard intents.
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

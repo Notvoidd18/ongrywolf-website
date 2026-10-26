@@ -22,7 +22,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="py-10 max-w-6xl mx-auto px-4 sm:px-6 w-full space-y-8">
+    <div className="pt-28 sm:pt-32 pb-16 max-w-6xl mx-auto px-4 sm:px-6 w-full space-y-8">
       {/* Top Banner / Account Overview */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-lg border border-surface-border bg-surface">
         <div className="space-y-1">

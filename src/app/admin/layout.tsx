@@ -22,7 +22,7 @@ export default async function AdminLayout({
   // 2. Authenticated as non-owner -> Block with HTTP 403 screen
   if (!session.isOwner) {
     return (
-      <div className="py-24 max-w-lg mx-auto px-4 text-center space-y-6">
+      <div className="pt-32 pb-24 max-w-lg mx-auto px-4 text-center space-y-6">
         <div className="w-14 h-14 rounded-full bg-rose-950/80 border border-rose-800 text-rose-400 mx-auto flex items-center justify-center">
           <ShieldAlert className="w-7 h-7" />
         </div>
@@ -63,7 +63,7 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="py-10 max-w-6xl mx-auto px-4 sm:px-6 w-full space-y-8">
+    <div className="pt-28 sm:pt-32 pb-16 max-w-6xl mx-auto px-4 sm:px-6 w-full space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-lg border border-surface-border bg-surface">
         <div className="space-y-1">
