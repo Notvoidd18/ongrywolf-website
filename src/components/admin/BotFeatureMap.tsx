@@ -346,7 +346,7 @@ export function BotFeatureMap({
 
                   <div className="pt-2 border-t border-surface-border flex items-center justify-between text-[11px] font-mono">
                     <span className="text-slate-400">
-                      Commands: {feature.defaultAssignedCmds?.map((c) => `!${c}`).join(', ') || 'Auto'}
+                      Commands: {feature.defaultAssignedCmds?.map((c) => `/${c}`).join(' ') || 'Auto'}
                     </span>
                     <span
                       className={`font-bold ${

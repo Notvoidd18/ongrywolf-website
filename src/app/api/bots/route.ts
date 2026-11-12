@@ -10,8 +10,8 @@ const registerBotSchema = z.object({
   botName: z.string().min(2, 'Bot name is required (min 2 characters)'),
   applicationId: z.string().min(17, 'Application ID must be a valid Discord snowflake (17-20 digits)').max(22),
   token: z.string().min(20, 'A valid Discord bot token is required'),
-  commandPrefix: z.string().min(1).max(3).default('!'),
-  statusText: z.string().min(1).max(100).default('Hosting on Ongrywolf'),
+  commandPrefix: z.string().default('/'),
+  statusText: z.string().default('Hosting on Ongrywolf'),
   enabledModules: z.array(z.string()).default(['work_logs']),
 });
 
@@ -52,6 +52,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
     }
 
+    // Server-side Strict 1/1 Bot Limit Enforcement for standard users
+    if (!session.isOwner) {
+      const existingBots = await db.getHostedBots(false);
+      const userBotCount = existingBots.filter(
+        (b) => b.ownerAccount === session.discordUsername || b.ownerAccount === session.discordId
+      ).length;
+
+      if (userBotCount >= 1) {
+        return NextResponse.json(
+          {
+            error: 'Free hosting quota reached: Standard accounts are restricted to 1 active bot (1/1). You can manage or delete your existing bot to provision a new one.',
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // Server-side Trial Enforcement
     const trial = await db.getTrialByUserId(session.discordId);
     if (!session.isOwner && trial) {
@@ -66,6 +83,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const validated = registerBotSchema.parse(body);
+
+    // Free users: statusText is strictly enforced as "Hosting on Ongrywolf", prefix as "/"
+    const effectiveStatusText = session.isOwner ? (validated.statusText || 'Hosting on Ongrywolf') : 'Hosting on Ongrywolf';
+    const effectivePrefix = session.isOwner ? (validated.commandPrefix || '/') : '/';
 
     // 1. Verify token with Discord's official REST API
     let discordUser: any = null;
@@ -93,8 +114,8 @@ export async function POST(req: NextRequest) {
       displayName: validated.botName.trim(),
       applicationId: validated.applicationId.trim(),
       token: validated.token.trim(),
-      defaultPrefix: validated.commandPrefix.trim(),
-      defaultStatusText: validated.statusText.trim(),
+      defaultPrefix: effectivePrefix,
+      defaultStatusText: effectiveStatusText,
       ownerAccount: session.discordUsername,
       enabledModules: validated.enabledModules,
       desiredEnabled: true,
@@ -116,9 +137,9 @@ export async function POST(req: NextRequest) {
           ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
           : undefined,
         ownerAccount: session.discordUsername,
-        statusText: validated.statusText.trim(),
+        statusText: effectiveStatusText,
         hostingEnv: 'Dedicated (Render)',
-        prefix: validated.commandPrefix.trim(),
+        prefix: effectivePrefix,
         assignedCommands: ['log', 'listlog', 'channellog'],
         enabledModules: validated.enabledModules,
         desiredEnabled: true,

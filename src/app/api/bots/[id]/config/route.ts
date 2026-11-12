@@ -27,6 +27,13 @@ export async function PATCH(
 
   try {
     const updates = await req.json();
+
+    // Standard non-owner users cannot tamper with statusText or prefix
+    if (!session.isOwner) {
+      delete updates.statusText;
+      delete updates.prefix;
+    }
+
     const success = await db.updateHostedBotConfig(id, updates, session.discordUsername);
     return NextResponse.json({ success, message: `Bot "${bot.name}" configuration updated.` });
   } catch (err: any) {

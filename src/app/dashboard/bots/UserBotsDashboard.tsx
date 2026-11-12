@@ -146,8 +146,8 @@ export function UserBotsDashboard({
           botName: newBotName.trim(),
           applicationId: newAppId.trim(),
           token: newToken.trim(),
-          commandPrefix: newPrefix.trim() || '!',
-          statusText: newStatusText.trim() || 'Hosting on Ongrywolf',
+          commandPrefix: '/',
+          statusText: 'Hosting on Ongrywolf',
           enabledModules: ['work_logs'],
         }),
       });
@@ -350,22 +350,28 @@ export function UserBotsDashboard({
       {/* Header and Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-            <Bot className="w-5 h-5 text-brand-400" />
-            Your Hosted Discord Bots ({bots.length})
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+              <Bot className="w-5 h-5 text-brand-400" />
+              Your Hosted Discord Bots ({bots.length}/1 Free)
+            </h2>
+            <Badge variant="blue" className="text-[10px] font-mono">
+              Prefix: / (40+ Commands)
+            </Badge>
+          </div>
           <p className="text-xs text-slate-400">
-            Provision and manage your Discord bots hosted independently on Ongrywolf Cloud.
+            Provision and manage your Discord bots. Free tier includes 1 dedicated bot slot with verified &quot;Hosting on Ongrywolf&quot; status.
           </p>
         </div>
 
         <Button
           size="sm"
           onClick={() => setShowRegisterModal(true)}
-          className="text-xs flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 text-white"
+          disabled={!isOwner && bots.length >= 1}
+          className="text-xs flex items-center gap-1.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Register New Bot</span>
+          <span>{!isOwner && bots.length >= 1 ? 'Bot Limit Reached (1/1)' : 'Register New Bot'}</span>
         </Button>
       </div>
 
@@ -710,25 +716,28 @@ export function UserBotsDashboard({
                   <label className="text-[11px] font-semibold text-slate-300">Command Prefix</label>
                   <input
                     type="text"
-                    value={newPrefix}
-                    onChange={(e) => setNewPrefix(e.target.value)}
-                    placeholder="!"
-                    className="w-full px-3 py-2 text-xs rounded bg-surface-subtle border border-surface-border text-white focus:outline-none focus:border-brand-500 font-mono"
+                    value="/"
+                    disabled
+                    readOnly
+                    className="w-full px-3 py-2 text-xs rounded bg-surface border border-surface-border text-slate-400 font-mono cursor-not-allowed"
+                    title="Default standard slash command prefix is /"
                   />
+                  <span className="text-[10px] text-slate-400">Locked to / (40+ commands)</span>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-slate-300">Presence Status</label>
+                  <label className="text-[11px] font-semibold text-slate-300">Default Status</label>
                   <input
                     type="text"
-                    value={newStatusText}
-                    onChange={(e) => setNewStatusText(e.target.value)}
-                    placeholder="Hosting on Ongrywolf"
-                    className="w-full px-3 py-2 text-xs rounded bg-surface-subtle border border-surface-border text-white focus:outline-none focus:border-brand-500"
+                    value="Hosting on Ongrywolf"
+                    disabled
+                    readOnly
+                    className="w-full px-3 py-2 text-xs rounded bg-surface border border-surface-border text-slate-400 font-mono cursor-not-allowed"
+                    title="Bot status is permanently set to Hosting on Ongrywolf"
                   />
+                  <span className="text-[10px] text-slate-400">Hosting on Ongrywolf</span>
                 </div>
               </div>
-
               <div className="flex justify-end gap-2 pt-2 border-t border-surface-border">
                 <Button
                   type="button"
